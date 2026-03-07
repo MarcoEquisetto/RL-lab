@@ -1,125 +1,124 @@
-import numpy as np; np.random.seed(6)
-import matplotlib.pyplot as plt
+import os, sys, numpy
+module_path = os.path.abspath(os.path.join('../tools'))
+if module_path not in sys.path: sys.path.append(module_path)
+from DangerousGridWorld import GridWorld
 
 
-class MultiArmedBandit():
+def random_dangerous_grid_world( environment ):
 	"""
-	A class that implements the N-armed testbed environment
-
-	Attributes
-	----------
-		levers : int
-			number of levers, same as the possible actions in the environment
-		q_star : list
-			value of each action, i.e., mean reward obtained when the corresponding action is selected
-		sampling_variance: int
-			variance of the returned reward selecting an action, the mean is q_star[action]
-	
-	Methods
-	-------
-		action( action )
-			return the reward obtained selecting the action 'action'; this value is obtained 
-			sampling from a distribution with mean=q_star[action] and varaince=self.sampling_variance
-	"""
-
-	def __init__( self, levers ):
-		#
-		# YOUR CODE HERE!
-		#	
-		self.levers = None
-		self.q_star = None
-		self.sampling_variance = None
-			
-	def action( self, action ):
-		#
-		# YOUR CODE HERE!
-		#
-		return None
-
-
-def banditAlgorithm( env, eps=0, maxiters=1000 ):
-	"""
-	Implements the Simple Bandit Algorithm
+	Performs a random trajectory on the given Dangerous Grid World environment 
 	
 	Args:
-		env: instance of the multi-armed bandit environmet
-		eps: random value for the eps-greedy policy (probability of random action)
-		maxiters: number of steps to perform in the environment
+		environment: OpenAI Gym environment
 		
 	Returns:
-		avg_reward: list of the rewards obtained during the training,, averaged from the first step to the last
-		Q: the updated value function after the training
-	"""	
-
-	levers = env.levers
-	Q = np.array([0 for _ in range(levers) ], dtype=float)
-	N = np.array([0 for _ in range(levers) ], dtype=int)
-	ep_reward = []; avg_reward = []
-
-	for _ in range(maxiters):
+		trajectory: an array containing the sequence of states visited by the agent
+	"""
+	trajectory = []
+	#
+	# YOUR CODE HERE!
+	#
+	for step in range(10):
 		#
 		# YOUR CODE HERE!
 		#
-		ep_reward.append( 0 )
-		avg_reward.append( np.mean(ep_reward) )
+		if False: break # <- Hint: check if the state is terminal
+	
+	return trajectory
 
-	return avg_reward, Q
+
+class RecyclingRobot():
+	"""
+	Class that implements the environment Recycling Robot of the book: 'Reinforcement
+	Learning: an introduction, Sutton & Barto'. Example 3.3 page 52 (second edition).
+		
+	Attributes
+	----------
+		observation_space : int
+			define the number of possible actions of the environment
+		action_space: int
+			define the number of possible states of the environment
+		actions: dict
+			a dictionary that translate the 'action code' in human languages
+		states: dict
+			a dictionary that translate the 'state code' in human languages
+		
+	Methods
+	-------
+		reset( self )
+			method that reset the environment to an initial state; returns the state
+		step( self, action )
+			method that perform the action given in input, computes the next state and the reward; returns 
+			next_state and reward
+		render( self )
+			method that print the internal state of the environment
+	"""
+
+
+	def __init__( self ):
+
+		# Loading the default parameters
+		self.alfa = 0.7
+		self.beta = 0.7
+		self.r_search = 0.5
+		self.r_wait = 0.2
+
+		# Defining the environment variables
+		self.observation_space = None
+		self.action_space = None
+		self.actions = None
+		self.states = None
+
+
+	def reset( self ):
+		#
+		# YOUR CODE HERE!
+		#
+		return self.state
+
+
+	def step( self, action ):
+
+		reward = 0
+		#
+		# YOUR CODE HERE!
+		#
+		return self.state, reward, False, None
+
+
+	def render( self ):
+
+		#
+		# YOUR CODE HERE!
+		#
+		return True
 
 
 def main():
 	print( "\n************************************************" )
-	print( "*   Welcome to the second lesson of the RL-Lab!  *" )
-	print( "*             (Multi-Armed Bandit)               *" )
-	print( "**************************************************" )
+	print( "*  Welcome to the first lesson of the RL-Lab!  *" )
+	print( "*             (MDP and Environments)           *" )
+	print( "************************************************" )
 
-	# Hyperparameters 
-	n_armed = 10
-	training_steps = 1000
+	print( "\nA) Random Policy on Dangerous Grid World:" )
+	env = GridWorld()
+	env.render()
+	random_trajectory = random_dangerous_grid_world( env )
+	print( "\nRandom trajectory generated:", random_trajectory )
 
-	# Training phase
-	print( f"\n{n_armed}-armed testbed with {training_steps} training_steps" )
-	bandit = MultiArmedBandit( levers=n_armed )
-	eps_00, q_00 = banditAlgorithm( bandit, eps=0.00, maxiters=training_steps ) 
-	eps_01, q_01 = banditAlgorithm( bandit, eps=0.01, maxiters=training_steps ) 
-	eps_10, q_10 = banditAlgorithm( bandit, eps=0.10, maxiters=training_steps )
+
+	print( "\nB) Custom Environment: Recycling Robot" )
+	env = RecyclingRobot()
+	state = env.reset()
+	ep_reward = 0
 	
-	# Computing and plotting the reward of the last steps
-	print( f"\n\tLast epsiodes reward (with eps=0   ):", np.mean(eps_00[-20:]) )
-	print( f"\tLast epsiodes reward (with eps=0.01):", np.mean(eps_01[-20:]) )
-	print( f"\tLast epsiodes reward (with eps=0.1 ):", np.mean(eps_10[-20:]) )
-	
-	# Computing and plotting the optimal action found
-	print( "\n\tThe real optimal action is: ", bandit.q_star.argmax() )
-	print( f"\tThe optimal actions found are: {q_00.argmax()} (eps=0), {q_01.argmax()} (eps=0.01), and {q_10.argmax()} (eps=0.1)" )
+	for step in range(10):
+		a = numpy.random.randint( 0, env.action_space )
+		new_state, r, _, _ = env.step( a )
+		ep_reward += r
+		print( f"\tFrom state '{env.states[state]}' selected action '{env.actions[a]}': \t total reward: {ep_reward:1.1f}" )
+		state = new_state
 
-	# Repeat the experiment for 2000 episodes
-	eps_00_average, eps_01_average, eps_10_average = [], [], []
-	for _ in range(500):
-		bandit = MultiArmedBandit( levers=n_armed )
-		eps_00_average.append( banditAlgorithm( bandit, eps=0.00, maxiters=training_steps )[0] )
-		eps_01_average.append( banditAlgorithm( bandit, eps=0.01, maxiters=training_steps )[0] )
-		eps_10_average.append( banditAlgorithm( bandit, eps=0.10, maxiters=training_steps )[0] )
-
-	eps_00_average = np.average(np.array(eps_00_average), axis=0)
-	eps_01_average = np.average(np.array(eps_01_average), axis=0)
-	eps_10_average = np.average(np.array(eps_10_average), axis=0)
-
-
-	# Plot the results
-	print( "\n\tPlotting data..." )
-	t = np.arange(0, training_steps)
-	_, ax = plt.subplots()
-	ax.plot(t, eps_00_average, label="eps: 0", linewidth=3)
-	ax.plot(t, eps_01_average, label="eps: 0.01", linewidth=3)
-	ax.plot(t, eps_10_average, label="eps: 0.1", linewidth=3)
-	plt.xlabel( "steps", fontsize=16)
-	plt.ylabel( "average reward", fontsize=16)
-	ax.grid()
-	plt.ylim([0, None])
-	plt.legend()
-	plt.show()
-	
 
 if __name__ == "__main__":
 	main()
-	

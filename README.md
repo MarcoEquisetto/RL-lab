@@ -23,6 +23,7 @@ Python virtual environments users (venv) can avoid the Miniconda installation. T
   - jupyter, matplotlib, tqdm
   - tensorflow, keras
 
+<!---	
 ## Spinning Up Set-Up (Conda)
 1. Ensure you already have Miniconda installed from the previous lessons
 
@@ -35,7 +36,7 @@ Python virtual environments users (venv) can avoid the Miniconda installation. T
 	- navigate to RL-lab/spinningup/spinningup
 	- *pip install opencv-python==4.1.2.30*
 	- *pip install -e .*
-<!---	
+
 ## Spinning Up Usage
 1. Remember to activate your miniconda environment: *conda activate spinningup*
 
