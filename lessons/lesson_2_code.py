@@ -4,7 +4,7 @@ if module_path not in sys.path: sys.path.append(module_path)
 from DangerousGridWorld import GridWorld
 
 
-def random_dangerous_grid_world( environment ):
+def random_dangerous_grid_world( env ):
 	"""
 	Performs a random trajectory on the given Dangerous Grid World environment 
 	
@@ -15,14 +15,17 @@ def random_dangerous_grid_world( environment ):
 		trajectory: an array containing the sequence of states visited by the agent
 	"""
 	trajectory = []
-	#
-	# YOUR CODE HERE!
-	#
-	for step in range(10):
-		#
-		# YOUR CODE HERE!
-		#
-		if False: break # <- Hint: check if the state is terminal
+	current_pos = env.random_initial_state()
+	print( f"Random trajectory generated starting from position {current_pos}:" )
+
+	for _ in range(10):
+		trajectory.append(current_pos)
+		action = numpy.random.randint(0, env.action_space)
+		current_pos = env.sample(action, current_pos)
+		print( f"\tFrom position {trajectory[-1]} selected action {action} and moved to position {current_pos}" )
+
+		if env.is_terminal(current_pos): 
+			break
 	
 	return trajectory
 
@@ -42,7 +45,7 @@ class RecyclingRobot():
 			a dictionary that translate the 'action code' in human languages
 		states: dict
 			a dictionary that translate the 'state code' in human languages
-		
+
 	Methods
 	-------
 		reset( self )
@@ -64,39 +67,66 @@ class RecyclingRobot():
 		self.r_wait = 0.2
 
 		# Defining the environment variables
-		self.observation_space = None
-		self.action_space = None
-		self.actions = None
-		self.states = None
+		self.observation_space = 2
+		self.action_space = 3
+		self.actions = {0: "search", 1: "wait", 2: "recharge"}
+		self.states = {0: "high", 1: "low"}
 
 
 	def reset( self ):
-		#
-		# YOUR CODE HERE!
-		#
+		self.state = 0
 		return self.state
 
 
 	def step( self, action ):
-
 		reward = 0
-		#
-		# YOUR CODE HERE!
-		#
+		wait_r = 0
+		search_r = 1
+		rescue_r = -3
+		recharge_r = 0
+
+		if action == 0: # Search
+			if self.state == 0: # High
+				if numpy.random.rand() < self.alfa:
+					self.state = 0
+					reward = search_r
+				else:
+					self.state = 1
+					reward = search_r
+
+			else: # Low
+				if numpy.random.rand() < 1 - self.beta:
+					self.state = 0
+					reward = rescue_r
+				else:
+					self.state = 1
+					reward = search_r
+
+		if action == 1: # Wait
+			if self.state == 0: # High
+				self.state = 0
+				reward = wait_r
+
+			else: # Low
+				self.state = 1
+				reward = wait_r
+
+		if action == 2: # Recharge
+			if self.state == 1:
+				self.state = 0
+				reward = recharge_r
+
 		return self.state, reward, False, None
 
 
 	def render( self ):
-
-		#
-		# YOUR CODE HERE!
-		#
+		print( f"\nRecycling Robot Environment: \n\tStates: {self.states} \n\tActions: {self.actions}\n\n" )
 		return True
 
 
 def main():
 	print( "\n************************************************" )
-	print( "*  Welcome to the first lesson of the RL-Lab!  *" )
+	print( "*  Welcome to the second lesson of the RL-Lab!  *" )
 	print( "*             (MDP and Environments)           *" )
 	print( "************************************************" )
 
@@ -110,6 +140,7 @@ def main():
 	print( "\nB) Custom Environment: Recycling Robot" )
 	env = RecyclingRobot()
 	state = env.reset()
+	env.render()
 	ep_reward = 0
 	
 	for step in range(10):
