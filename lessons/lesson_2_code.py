@@ -65,6 +65,8 @@ class RecyclingRobot():
 		self.beta = 0.7
 		self.r_search = 0.5
 		self.r_wait = 0.2
+		self.r_rescue = -3
+		self.r_charge = 0
 
 		# Defining the environment variables
 		self.observation_space = 2
@@ -80,41 +82,37 @@ class RecyclingRobot():
 
 	def step( self, action ):
 		reward = 0
-		wait_r = 0
-		search_r = 1
-		rescue_r = -3
-		recharge_r = 0
 
 		if action == 0: # Search
 			if self.state == 0: # High
 				if numpy.random.rand() < self.alfa:
 					self.state = 0
-					reward = search_r
+					reward = self.r_search
 				else:
 					self.state = 1
-					reward = search_r
+					reward = self.r_search
 
 			else: # Low
 				if numpy.random.rand() < 1 - self.beta:
 					self.state = 0
-					reward = rescue_r
+					reward = self.r_rescue
 				else:
 					self.state = 1
-					reward = search_r
+					reward = self.r_search
 
 		if action == 1: # Wait
 			if self.state == 0: # High
 				self.state = 0
-				reward = wait_r
+				reward = self.r_wait
 
 			else: # Low
 				self.state = 1
-				reward = wait_r
+				reward = self.r_wait
 
 		if action == 2: # Recharge
 			if self.state == 1:
 				self.state = 0
-				reward = recharge_r
+				reward = self.r_charge
 
 		return self.state, reward, False, None
 
