@@ -6,6 +6,7 @@ dependencies:
   - scipy
   - numpy
   - jupyter
+  - matplotlib
   - tqdm
   - tensorflow
   - keras

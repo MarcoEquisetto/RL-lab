@@ -210,13 +210,16 @@ class GridWorld( gym.Env ):
 		return self.random_initial_state()
 
 
-	def sample_episode( self, policy, max_length=25 ):
+	def sample_episode( self, policy, initial_state=None, initial_action=None, max_length=25 ):
 
 		episode = []
 
-		robot_state = self.random_initial_state()
+		if initial_state is None:
+			robot_state = self.random_initial_state()
+		else:
+			robot_state = initial_state
 
-		while True:
+		for step in range(max_length):
 			max_length -= 1
 
 			action_probabilities = policy[robot_state]
@@ -225,7 +228,10 @@ class GridWorld( gym.Env ):
 				r = 1 - sum(action_probabilities)
 				action_probabilities[ action_probabilities.index( max(action_probabilities) )] += r
 
-			action = numpy.random.choice( numpy.arange(0, self.action_space), p=action_probabilities)
+			if step == 0 and initial_action is not None:
+				action = initial_action
+			else:
+				action = numpy.random.choice( numpy.arange(0, self.action_space), p=action_probabilities)
 			new_state = self.sample( action, robot_state )
 			reward = self.R[new_state]		
 
