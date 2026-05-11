@@ -29,9 +29,10 @@ def createDNN_keras(nInputs, nOutputs, nLayer, nNodes):
 	
 	# Initialize the neural network
 	model = Sequential()
-	#
-	# YOUR CODE HERE!
-	#
+	model.add(tf.keras.Input(shape=(nInputs,)))
+	for _ in range(nLayer):
+		model.add(Dense(nNodes, activation='relu'))
+	model.add(Dense(nOutputs, activation='linear'))
 	return model
 
 class TorchModel(nn.Module):
@@ -50,15 +51,14 @@ class TorchModel(nn.Module):
 	def __init__(self, nInputs, nOutputs, nLayer, nNodes):
 		super(TorchModel, self).__init__()
 		self.fc1 = nn.Linear(nInputs, nNodes)
-		#
-		# YOUR CODE HERE!
-		#
+		self.hidden_layers = nn.ModuleList([nn.Linear(nNodes, nNodes) for _ in range(nLayer - 1)])
 		self.output = nn.Linear(nNodes, nOutputs)
 
 	def forward(self, x):
-		#
-		# YOUR CODE HERE!
-		#
+		x = torch.relu(self.fc1(x))
+		for layer in self.hidden_layers:
+			x = torch.relu(layer(x))
+		x = self.output(x)
 		return x
 
 
@@ -97,9 +97,9 @@ def training_loop(env, neural_net, updateRule, keras=True, eps=1.0, updates=1, e
 
 	#TODO: initialize the optimizer 
 	if keras:
-		optimizer = None
+		optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
 	else:
-		optimizer = None
+		optimizer = optim.Adam(neural_net.parameters(), lr=0.01)
 
 	 
 	rewards_list, memory_buffer = [], collections.deque( maxlen=1000 )
@@ -107,31 +107,39 @@ def training_loop(env, neural_net, updateRule, keras=True, eps=1.0, updates=1, e
 	for ep in range(episodes):
 
 		#TODO: reset the environment and obtain the initial state
-		state = None 
+		state, _ = env.reset()
+		state = np.array([state])
 		ep_reward = 0
 		while True:
 
 			#TODO: select the action to perform exploiting an epsilon-greedy strategy
-			action = None 
+			if np.random.random() < eps:
+				action = env.action_space.sample()
+			else:
+				if keras:
+					action = np.argmax(neural_net(state).numpy()[0])
+				else:
+					action = np.argmax(neural_net(torch.tensor(state, dtype=torch.float32)).detach().numpy()[0])
 
 			#TODO: update epsilon value
-			eps *= ...
+			eps = max(0.1, eps * 0.99)
 
 			#TODO: Perform the action, store the data in the memory buffer and update the reward
-			memory_buffer.append(None)
-			ep_reward += None
+			next_state, reward, done, truncated, _ = env.step(action)
+			next_state = np.array([next_state])
+			memory_buffer.append((state, action, reward, next_state, done or truncated))
+			ep_reward += reward
 
 			# Perform the actual training
 			for _ in range(updates):
-				#TODO: call the update rule...
-				pass
+				DQNupdate(neural_net, keras, memory_buffer, optimizer)
 				
 
 			#TODO: modify the exit condition for the episode
-			if False: break
+			if done or truncated: break
 
 			#TODO: update the current state
-			state = None
+			state = next_state
 
 		# Update the reward list to return
 		rewards_list.append(ep_reward)
@@ -157,28 +165,38 @@ def DQNupdate(neural_net, keras, memory_buffer, optimizer, batch_size=32, gamma=
 	for idx in indices: 
 
 		#TODO: extract data from the buffer 
-		state, action, reward, next_state, done = None, None, None, None, None
+		state, action, reward, next_state, done = memory_buffer[idx]
 
 		#TODO: compute the target for the training
 		if keras:
-			target = None
+			target = neural_net(state).numpy()
 		else:
-			target = None
+			target = neural_net(torch.tensor(state, dtype=torch.float32)).detach().numpy()
 
 		
 		#TODO: update target using the update rule...
 		if done:
-			pass
+			target[0][action] = reward
 		else:
-			pass
+			if keras:
+				next_q = neural_net(next_state).numpy()
+			else:
+				next_q = neural_net(torch.tensor(next_state, dtype=torch.float32)).detach().numpy()
+			target[0][action] = reward + gamma * np.max(next_q)
 
 		#TODO: compute the gradient and perform the backpropagation step using the selected framework
 		if keras:
 			with tf.GradientTape() as tape:
 				objective = mse(neural_net, state, target)
-
+			gradients = tape.gradient(objective, neural_net.trainable_variables)
+			optimizer.apply_gradients(zip(gradients, neural_net.trainable_variables))
 		else:
-			pass
+			optimizer.zero_grad()
+			state_t = torch.tensor(state, dtype=torch.float32)
+			target_t = torch.tensor(target, dtype=torch.float32)
+			objective = nn.MSELoss()(neural_net(state_t), target_t)
+			objective.backward()
+			optimizer.step()
 
 
 def main():
