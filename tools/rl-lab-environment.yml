@@ -10,3 +10,5 @@ dependencies:
   - tqdm
   - tensorflow
   - keras
+  - scipy
+  - matplotlib
